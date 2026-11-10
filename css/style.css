@@ -1,7 +1,7 @@
 /* One working page: sticky section tabs, summary first, plot plan route view, filterable tables. */
 :root{
   --bg:#f3f6f8; --surface:#ffffff; --sunk:#e9eef2; --ink:#14212b; --muted:#566573; --line:#d3dbe2;
-  --accent:#0a6a86; --accent-ink:#ffffff; --optA:#4c5f9e; --optB:#0a6a86; --optR:#a8480a; --optT:#7a3f98;
+  --accent:#0a6a86; --accent-ink:#ffffff; --optA:#4c5f9e; --optB:#0a6a86; --optR:#a8480a; --optT:#7a3f98; --optD:#a3195b;
   --crit:#b3261e; --crit-bg:#fbe9e7; --warn:#8a5a00; --warn-bg:#fff1d6; --ok:#1c7048; --ok-bg:#e2f3ea; --info:#3b4f63; --info-bg:#e4ebf1;
   --p-ground:#f7f9fa; --p-bld:#dfe6ec; --p-eq:#cfd9e1; --p-yard:#eef2f5; --p-stroke:#8494a2; --p-water:#cfe6f2; --p-wire:#a9b6c1; --p-dots:#ffffff;
   --font:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
@@ -9,13 +9,13 @@
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#0f161c; --surface:#18222b; --sunk:#111a21; --ink:#e6edf2; --muted:#9aa9b6; --line:#2c3a46;
-  --accent:#4fb6d1; --accent-ink:#06222b; --optA:#93a3dd; --optB:#4fb6d1; --optR:#f0a35e; --optT:#c79be0;
+  --accent:#4fb6d1; --accent-ink:#06222b; --optA:#93a3dd; --optB:#4fb6d1; --optR:#f0a35e; --optT:#c79be0; --optD:#f08cb8;
   --crit:#ff8a80; --crit-bg:#3a1c1a; --warn:#f0b955; --warn-bg:#33270f; --ok:#6fd0a0; --ok-bg:#13301f; --info:#b3c2cf; --info-bg:#22303b;
   --p-ground:#141d25; --p-bld:#26333f; --p-eq:#2f3f4d; --p-yard:#1a252e; --p-stroke:#6f8191; --p-water:#1f4257; --p-wire:#4a5a68; --p-dots:#0f161c;
   color-scheme:dark } }
 :root[data-theme="dark"]{
   --bg:#0f161c; --surface:#18222b; --sunk:#111a21; --ink:#e6edf2; --muted:#9aa9b6; --line:#2c3a46;
-  --accent:#4fb6d1; --accent-ink:#06222b; --optA:#93a3dd; --optB:#4fb6d1; --optR:#f0a35e; --optT:#c79be0;
+  --accent:#4fb6d1; --accent-ink:#06222b; --optA:#93a3dd; --optB:#4fb6d1; --optR:#f0a35e; --optT:#c79be0; --optD:#f08cb8;
   --crit:#ff8a80; --crit-bg:#3a1c1a; --warn:#f0b955; --warn-bg:#33270f; --ok:#6fd0a0; --ok-bg:#13301f; --info:#b3c2cf; --info-bg:#22303b;
   --p-ground:#141d25; --p-bld:#26333f; --p-eq:#2f3f4d; --p-yard:#1a252e; --p-stroke:#6f8191; --p-water:#1f4257; --p-wire:#4a5a68; --p-dots:#0f161c;
   color-scheme:dark }
@@ -82,14 +82,14 @@ tr.detail td{background:var(--sunk);color:var(--ink)}
 .gantt .head .gt span{position:absolute;top:5px}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.8rem;color:var(--muted);margin-top:8px}
 .legend .lg{display:inline-block;width:16px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
-.cmp td:first-child{font-weight:700;width:17%} .cmp th:nth-child(2){color:var(--optA)} .cmp th:nth-child(3){color:var(--optB)}
+.cmp td:first-child{font-weight:700;width:17%} .cmp th:nth-child(2){color:var(--optA)} .cmp th:nth-child(3){color:var(--optB)} .cmp th:nth-child(4){color:var(--optD)}
 .note{font-size:.84rem;color:var(--muted);max-width:90ch}
 footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line)} footer .wrap{padding-block:14px 26px}
 
 /* ---------- route view ---------- */
 #route{--route:var(--optB)}
-#route[data-mode="a"]{--route:var(--optA)} #route[data-mode="r"]{--route:var(--optR)} #route[data-mode="t"]{--route:var(--optT)}
-.modes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+#route[data-mode="a"]{--route:var(--optA)} #route[data-mode="r"]{--route:var(--optR)} #route[data-mode="t"]{--route:var(--optT)} #route[data-mode="d"]{--route:var(--optD)}
+.modes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:12px}
 .modes button{text-align:left;padding:9px 12px;border-left:5px solid var(--mc);line-height:1.25;display:grid;gap:2px}
 .modes button small{font-weight:400;color:var(--muted);font-size:.76rem}
 .modes button[aria-pressed="true"]{background:var(--surface);color:var(--ink);border-color:var(--mc);box-shadow:inset 0 0 0 2px var(--mc)}
@@ -101,40 +101,40 @@ footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line)} foot
 .mapscroll{overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--p-ground)}
 #plot{display:block;width:100%;height:auto;aspect-ratio:816/655;cursor:grab;user-select:none;-webkit-user-select:none}
 #plot.dragging{cursor:grabbing}
-#plot text{font-family:var(--font);fill:var(--ink);pointer-events:none}
-#plot .fence{fill:none;stroke:var(--p-stroke);stroke-width:1.2;stroke-dasharray:7 3 1.5 3}
-#plot .road{stroke:var(--line);stroke-width:5;fill:none}
-#plot .decor{stroke:var(--p-wire);stroke-width:1.3;fill:none}
-#plot .decor.gas{stroke-dasharray:4 3}
-#plot .dot{fill:var(--p-wire)}
-#plot .wire{stroke:var(--p-wire);stroke-width:2;fill:none;stroke-linejoin:round}
-#plot .blk rect,#plot .blk circle{fill:var(--p-bld);stroke:var(--p-stroke);stroke-width:1}
-#plot .k-eq rect,#plot .k-eq circle{fill:var(--p-eq)}
-#plot .k-water rect,#plot .k-water circle{fill:var(--p-water)}
-#plot .k-tank rect{fill:none;stroke-dasharray:3 2}
-#plot .k-yard rect{fill:var(--p-yard);stroke-dasharray:6 3}
-#plot .k-shell rect{fill:var(--p-ground)}
-#plot .k-off rect{fill:none;stroke-dasharray:4 3}
-#plot .k-res rect{fill:url(#hatch);stroke-dasharray:4 3}
-#plot .k-res text,#plot .k-off text{fill:var(--muted)}
-#plot .k-spare rect{fill:none;stroke-dasharray:3 2}
-#plot .k-line rect{fill:var(--p-eq)}
-#plot .hatchline{stroke:var(--line);stroke-width:1}
-#plot .blk.pick{cursor:pointer}
-#plot .blk.pick:focus{outline:none}
-#plot .blk.pick:focus-visible rect,#plot .blk.pick:focus-visible circle{stroke:var(--ink);stroke-width:2.6}
-#plot .blk.dim{opacity:.28}
-#plot .blk.req rect,#plot .blk.req circle{stroke:var(--route);stroke-width:1.8}
-#plot .blk.live rect,#plot .blk.live circle{fill:color-mix(in srgb,var(--route) 26%,var(--surface))}
-#plot .blk.k-yard.live rect,#plot .blk.k-shell.live rect{fill:color-mix(in srgb,var(--route) 9%,var(--p-ground))}
-#plot .blk.cur rect,#plot .blk.cur circle{stroke-width:3}
-#plot .blk.sel rect,#plot .blk.sel circle{stroke:var(--ink);stroke-width:2.6}
-#plot .dimmable.dim{opacity:.3}
-#plot .pend{stroke:var(--route);stroke-width:2.4;fill:none;stroke-dasharray:5 4;stroke-linejoin:round;opacity:.75}
-#plot .flow{stroke:var(--route);stroke-width:5;fill:none;stroke-linecap:round;stroke-linejoin:round}
-#plot .flowdots{stroke:var(--p-dots);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:.1 9}
-#plot .arrow{fill:var(--route);stroke:var(--p-dots);stroke-width:1;stroke-linejoin:round}
-#plot .north text{fill:var(--muted)} #plot .north path{stroke:var(--muted);fill:none;stroke-width:1.4}
+.rsvg text{font-family:var(--font);fill:var(--ink);pointer-events:none}
+.rsvg .fence{fill:none;stroke:var(--p-stroke);stroke-width:1.2;stroke-dasharray:7 3 1.5 3}
+.rsvg .road{stroke:var(--line);stroke-width:5;fill:none}
+.rsvg .decor{stroke:var(--p-wire);stroke-width:1.3;fill:none}
+.rsvg .decor.gas{stroke-dasharray:4 3}
+.rsvg .dot{fill:var(--p-wire)}
+.rsvg .wire{stroke:var(--p-wire);stroke-width:2;fill:none;stroke-linejoin:round}
+.rsvg .blk rect,.rsvg .blk circle{fill:var(--p-bld);stroke:var(--p-stroke);stroke-width:1}
+.rsvg .k-eq rect,.rsvg .k-eq circle{fill:var(--p-eq)}
+.rsvg .k-water rect,.rsvg .k-water circle{fill:var(--p-water)}
+.rsvg .k-tank rect{fill:none;stroke-dasharray:3 2}
+.rsvg .k-yard rect{fill:var(--p-yard);stroke-dasharray:6 3}
+.rsvg .k-shell rect{fill:var(--p-ground)}
+.rsvg .k-off rect{fill:none;stroke-dasharray:4 3}
+.rsvg .k-res rect{fill:url(#hatch);stroke-dasharray:4 3}
+.rsvg .k-res text,.rsvg .k-off text{fill:var(--muted)}
+.rsvg .k-spare rect{fill:none;stroke-dasharray:3 2}
+.rsvg .k-line rect{fill:var(--p-eq)}
+.rsvg .hatchline{stroke:var(--line);stroke-width:1}
+.rsvg .blk.pick{cursor:pointer}
+.rsvg .blk.pick:focus{outline:none}
+.rsvg .blk.pick:focus-visible rect,.rsvg .blk.pick:focus-visible circle{stroke:var(--ink);stroke-width:2.6}
+.rsvg .blk.dim{opacity:.28}
+.rsvg .blk.req rect,.rsvg .blk.req circle{stroke:var(--route);stroke-width:1.8}
+.rsvg .blk.live rect,.rsvg .blk.live circle{fill:color-mix(in srgb,var(--route) 26%,var(--surface))}
+.rsvg .blk.k-yard.live rect,.rsvg .blk.k-shell.live rect{fill:color-mix(in srgb,var(--route) 9%,var(--p-ground))}
+.rsvg .blk.cur rect,.rsvg .blk.cur circle{stroke-width:3}
+.rsvg .blk.sel rect,.rsvg .blk.sel circle{stroke:var(--ink);stroke-width:2.6}
+.rsvg .dimmable.dim{opacity:.3}
+.rsvg .pend{stroke:var(--route);stroke-width:2.4;fill:none;stroke-dasharray:5 4;stroke-linejoin:round;opacity:.75}
+.rsvg .flow{stroke:var(--route);stroke-width:5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.rsvg .flowdots{stroke:var(--p-dots);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:.1 9}
+.rsvg .arrow{fill:var(--route);stroke:var(--p-dots);stroke-width:1;stroke-linejoin:round}
+.rsvg .north text{fill:var(--muted)} .rsvg .north path{stroke:var(--muted);fill:none;stroke-width:1.4}
 .lg-flow{background:var(--route)} .lg-pend{background:repeating-linear-gradient(90deg,var(--route) 0 4px,transparent 4px 7px)}
 .lg-req{border:2px solid var(--route)} .lg-dim{background:var(--p-eq);opacity:.4;border:1px solid var(--p-stroke)}
 #modeInfo h3{border-left:5px solid var(--route);padding-left:8px}
@@ -158,10 +158,49 @@ footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line)} foot
 #blockInfo h3{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
 #blockInfo button{padding:2px 8px;font-size:.8rem}
 
+/* ---------- plot plan and single-line diagram side by side ---------- */
+.views{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.views figure{margin:0;min-width:0}
+.views figcaption{font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px}
+#route[data-view="both"] .routegrid{grid-template-columns:minmax(0,1fr)}
+#route[data-view="both"] .views{grid-template-columns:minmax(0,1.08fr) minmax(0,1fr)}
+#route[data-view="both"] .sidecol{grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));align-items:start}
+#route[data-view="plot"] #figSld,#route[data-view="sld"] #figPlot{display:none}
+#sld{display:block;width:100%;height:auto;aspect-ratio:780/640}
+#sld text{pointer-events:auto}
+#sld .wire{stroke-width:1.6}
+#sld .bus{stroke:var(--ink);stroke-width:4.5;stroke-linecap:round;fill:none}
+#sld .sym{fill:var(--surface);stroke:var(--ink);stroke-width:1.6}
+#sld .symtxt{font-weight:700;font-size:11px;text-anchor:middle}
+#sld .thin{stroke:var(--ink);stroke-width:1.4;fill:none}
+#sld .jn{fill:var(--p-stroke)}
+#sld .el{transition:opacity .25s}
+#sld .el.pick{cursor:pointer} #sld .el.pick:focus{outline:none}
+#sld .el.dim{opacity:.3}
+#sld .el.req .bus,#sld .el.req .sym,#sld .el.req .thin{stroke:var(--route)}
+#sld .el.live .sym{fill:color-mix(in srgb,var(--route) 22%,var(--surface))}
+#sld .el .cb.on{fill:var(--route);stroke:var(--route)}
+#sld .el.cur .bus{stroke-width:6.5}
+#sld .el.cur .sym{stroke-width:3}
+#sld .el.sel .sym,#sld .el.sel .bus,#sld .el.pick:focus-visible .sym,#sld .el.pick:focus-visible .bus{stroke:var(--ink);stroke-width:3.2}
+#sld .el.sel text,#sld .el.pick:focus-visible text{text-decoration:underline}
+#sld .flow{stroke-width:4.5}
+.lg-cb{background:var(--route);border:1.5px solid var(--route)} .lg-cbo{background:var(--surface);border:1.5px solid var(--ink)}
+/* load against capacity */
+.meter{position:relative;height:22px;border-radius:5px;background:var(--sunk);border:1px solid var(--line);margin:8px 0 22px}
+.meter .fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px 0 0 4px;background:var(--ok)}
+.meter.warn .fill{background:var(--warn)} .meter.over .fill{background:var(--crit)}
+.meter .mark{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
+.meter .mark span{position:absolute;top:26px;transform:translateX(-50%);font-size:.7rem;white-space:nowrap;color:var(--muted)}
+.meter .mark.end span{transform:translateX(-100%)}
+.loadnum{font-family:var(--mono);font-weight:700;font-size:1.05rem}
+.loads{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:4px;font-size:.84rem}
+.loads label{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:start;cursor:pointer}
+.loads .kw{font-family:var(--mono);white-space:nowrap}
 @media (prefers-reduced-motion:no-preference){
-  #plot .flowdots{animation:flow .9s linear infinite}
-  #plot .blk{transition:opacity .25s}
-  #plot .blk.cur rect,#plot .blk.cur circle{animation:pulse 1.6s ease-in-out infinite}
+  .rsvg .flowdots{animation:flow .9s linear infinite}
+  .rsvg .blk{transition:opacity .25s}
+  .rsvg .blk.cur rect,.rsvg .blk.cur circle{animation:pulse 1.6s ease-in-out infinite}
   @keyframes flow{from{stroke-dashoffset:9.1}to{stroke-dashoffset:0}}
   @keyframes pulse{50%{stroke-opacity:.35}}
 }
@@ -169,9 +208,10 @@ footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line)} foot
   .routegrid{grid-template-columns:minmax(0,1fr)}
   .sidecol .panel:nth-child(2){order:-1}
   .modes{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #route[data-view="both"] .views{grid-template-columns:minmax(0,1fr)}
 }
 @media (max-width:700px){
-  #plot{width:780px;max-width:none}
+  #plot{width:780px;max-width:none} #sld{width:700px;max-width:none}
   .maphint{display:none}
 }
 @media (max-width:520px){

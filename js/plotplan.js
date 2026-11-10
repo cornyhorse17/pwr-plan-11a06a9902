@@ -1,4 +1,4 @@
-/* Simplified plot plan geometry and the four route options.
+/* Simplified plot plan geometry and the five route options.
    Units are plan units (about 1 unit = 1.1 m). North is up (approximate).
    Positions are relative and simplified; small equipment is drawn larger than scale.
    Text entries: [text, x, y, size, weight, anchor]. */
@@ -62,7 +62,10 @@ const BLOCKS=[
   info:"UAT11. Energised together with GSUT11 through the busduct. Its tap changer corrects the 10 kV level."},
  {id:"bkt",n:"Back-up transformer",k:"eq",r:[[533,562,30,26]],t:[["Back-up",567,573,7.5,400,"start"],["transformer",567,582,7.5,400,"start"]],
   info:"Design alternative: the autotransformer tertiary feeds a back-up transformer and the 10 kV back-up boards. It needs no 500 kV energisation, but its status on site is not known."},
- {id:"bsdg",n:"Black start diesel generators",k:"eq",r:[[600,538,62,22]],t:[["Black start diesels",631,552,7,400]]},
+ {id:"bsdg",n:"Black start diesel generators, four sets of 2 MW",k:"eq",r:[[600,538,62,22]],t:[["Black start diesels",631,552,7,400]],
+  info:"Four diesel generator sets of 2 MW at 10 kV, 8 MW together, connected to the 10 kV common board. Designed for black start of one gas turbine and for safe shutdown. Commissioning procedure under review."},
+ {id:"cmn",n:"10 kV common board",k:"eq",r:[[573,512,24,22]],t:[["10 kV",585,521,6.5,700],["common",585,529,6.5,400]],
+  info:"10 kV common board, two sections with a bus coupler. The diesel sets connect here, two on each section, and a tie feeder runs to the Block 1 10 kV boards. Its position on the plot plan is indicative."},
  {id:"sw220",n:"220 kV switchyard",k:"yard",r:[[12,606,156,292]],t:[["220 kV switchyard",90,628,11.5,700]],
   info:"One line bay, one bus section with voltage transformers, and the autotransformer bay. Protection, interlocking, control and metering proven for these bays."},
  {id:"sw500",n:"500 kV switchyard",k:"yard",r:[[295,606,270,309]],t:[["500 kV switchyard",452,907,11.5,700]],
@@ -106,7 +109,10 @@ const SEG={
  lvc:[[530,507],[536,507]],
  gen:[[466,528],[466,546]],
  ter:[[330,772],[330,602],[548,602],[548,588]],
- bkc:[[548,562],[548,548],[525,548],[525,528]]
+ bkc:[[548,562],[548,548],[525,548],[525,528]],
+ dgc:[[600,549],[585,549],[585,534]],
+ ctie:[[585,512],[585,483.5],[513,483.5],[513,486]],
+ sfcp:[[496,500],[488,500]]
 };
 
 const AUX={t:"Plant auxiliaries for winter firing",b:["auxb","wtp","dmt","fgs","cool"],s:[],st:"Not assessed here",lead:"",
@@ -159,9 +165,20 @@ const MODES={
    LINE220,YARD220,
    {t:"Autotransformer energised from 220 kV, 500 kV side stays open",b:["at"],s:[],st:"Stated complete, records to check",lead:"DE",need:"Same prerequisites as in Option B: signed site tests, protection tested, fire protection in service."},
    {t:"Tertiary equipment and cable",b:["tert"],s:["ter"],st:"Shown in design only",lead:"DE",need:"Tertiary reactor, voltage transformer, disconnector, arresters and the cable to the back-up transformer, with their protection."},
-   {t:"Back-up transformer",b:["bkt"],s:[],st:"Shown in design only",lead:"DE",need:"Individual tests, tap changer, protection and trips. Status on site is not known."},
-   {t:"10 kV back-up boards, then Block 1 10 kV boards",b:["mv","leb1"],s:["bkc"],st:"Not known",lead:"DE, Integra",need:"Back-up incomers and the transfer logic to the block boards tested."},
-   {t:"Block 1 0.4 kV boards",b:["lv"],s:["lvc"],st:"In progress",lead:"Integra",need:"Fed from the 10 kV boards through the auxiliary transformers."}]}
+   {t:"Back-up transformer",b:["bkt"],s:[],d:["bkt"],st:"Shown in design only",lead:"DE",need:"Individual tests, tap changer, protection and trips. Status on site is not known."},
+   {t:"10 kV back-up boards, then Block 1 10 kV boards",b:["mv","leb1"],e:["bkb","b34"],s:["bkc"],st:"Not known",lead:"DE, Integra",need:"Back-up incomers and the transfer logic to the block boards tested."},
+   {t:"Block 1 0.4 kV boards",b:["lv"],s:["lvc"],d:[],st:"In progress",lead:"Integra",need:"Fed from the 10 kV boards through the auxiliary transformers. On the single-line diagram the back-up boards feed the Block 1 10 kV boards of the steam cycle; the onward connection to the GT11 unit board and its 0.4 kV boards is not verified, so it is not drawn as live there."}]},
+ d:{label:"Option 5: black start diesel generators",title:"Option 5: commissioning power from the black start diesel generators",
+  text:"The four diesel generator sets of 2 MW feed the 10 kV common board and, through the tie feeder, the Block 1 10 kV and 0.4 kV boards. There is no grid back-feed: the 500 kV and 220 kV switchyards, GSUT11 and UAT11 stay dead and the unit incomer stays open. The sets supply commissioning loads and the GT11 start auxiliaries within 8 MW. This is a plan, not a statement of readiness.",
+  dates:"d",
+  cond:["The commissioning procedure for the diesel generator system is approved and the four sets are tested one by one, then in parallel.","The sizing calculation, load list and load sequence are received. The load values in the capacity check are assumptions until then.","Fuel, refuelling and a limit of running hours are agreed.","The unit incomer and the back-up tie are isolated and locked, so the sets are never paralleled with another source without synchronising.","It gives no synchronisation to the system and no export. First synchronisation of GT11 still needs Option A or Option B.","Whether the black start test and a GT11 start on diesel supply are in the scope before first synchronisation is not decided."],
+  steps:[
+   {t:"Four diesel sets started and synchronised to each other",b:["bsdg"],e:["dg"],s:[],d:["dg1","dg2","dg3","dg4"],st:"Procedure under review",lead:"Integra",need:"Each set tested on its own: pre-start checks, protection tests, local, remote and automatic start, load test at 25, 50, 75 and 100 %. The first set to reach rated voltage and frequency closes onto the dead board; the others synchronise in turn."},
+   {t:"10 kV common board live, both sections",b:["cmn"],s:["dgc"],d:["cmnb"],st:"Not known",lead:"DE, Integra",need:"Site tests of both sections, the bus coupler and the feeders. The four sets run in parallel only with the two sections coupled; the coupler is drawn normally open in the design. Board protection checked for the low fault level of the diesel sets."},
+   {t:"Tie feeder closed: Block 1 10 kV board of GT11 live",b:["mv","leb1"],e:["ctie"],s:["ctie"],d:["ctie"],st:"In progress",lead:"Integra",task:"G14",need:"Unit incomer from UAT11 and the tie to the other board open and locked. Voltage and phase rotation checked. Signed site test records for the board held before it is made live."},
+   {t:"Block 1 0.4 kV boards",b:["lv"],s:["lvc"],d:["busd","lvc"],st:"In progress",lead:"Integra",task:"G15",need:"Fed from the 10 kV board through the auxiliary transformers. DC and UPS supplies in service."},
+   {t:"Commissioning loads taken in the agreed order, within 8 MW",b:["auxb","wtp","dmt","fgs","cool"],e:["loads"],s:[],d:[],st:"Not assessed here",lead:"Integra, DE",need:"Loads are taken in the order of the sizing calculation, once it is received. Largest permitted motor start stated. Voltage and frequency recorded during the first starts. See the load against capacity panel."},
+   {t:"GT11 start auxiliaries and starting converter run-up",b:["gt11"],e:["sfc"],s:["sfcp"],d:["sfc"],st:"Scope open",lead:"DE with the turbine supplier",task:"G16",need:"Only if it is in the scope and agreed with the turbine supplier. The starting converter is the largest single load. After the run-up GT11 can feed its own auxiliaries only through the generator breaker and UAT11, which needs their tests and the back-synchronising logic; export needs Option A or Option B."}]}
 };
 
 return {VIEWS:VIEWS,FENCE:FENCE,BLOCKS:BLOCKS,DECOR:DECOR,DOTS:DOTS,SEG:SEG,MODES:MODES};

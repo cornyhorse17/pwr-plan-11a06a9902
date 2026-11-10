@@ -1,6 +1,6 @@
 (function(){
 "use strict";
-const DATA=window.APP_DATA, PLOT=window.PLOT;
+const DATA=window.APP_DATA, PLOT=window.PLOT, SLD=window.SLD;
 const $=s=>document.querySelector(s), el=(t,a={},h="")=>{const e=document.createElement(t);for(const k in a)e.setAttribute(k,a[k]);e.innerHTML=h;return e};
 const DAY=864e5, D=s=>new Date(s+"T00:00:00Z"), fmt=d=>d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",timeZone:"UTC"});
 const TODAY=D("2026-11-10"), TARGET=D("2026-12-01"), SYNC_BASE=D("2026-12-22"), BASE_LV=D("2026-11-30");
@@ -24,22 +24,24 @@ function show(){const id=(location.hash||"#summary").slice(1), cur=secs.find(s=>
 window.addEventListener("hashchange",show);
 
 /* ---------- plan (critical path) ---------- */
-const BASE=DATA.PLAN;
-let LAST=null;
-function compute(){
-  const adj={kegoc:+$("#wKegoc").value, sat:+$("#wSat").value, soak:+$("#wSoak").value};
-  const T=BASE.map(x=>({...x})), by={};
-  T.forEach(x=>{ if(x.w==="kegoc")x.dur=adj.kegoc; if(x.w==="sat")x.dur+=adj.sat; if(x.w==="soak")x.dur=adj.soak; by[x.id]=x;});
+const BASE=DATA.PLAN, BASE_D=DATA.PLAN_D;
+let LAST=null, LASTD=null;
+function compute(list,ms,adj){
+  const T=list.map(x=>({...x})), by={};
+  T.forEach(x=>{ if(adj){if(x.w==="kegoc")x.dur=adj.kegoc; if(x.w==="sat")x.dur+=adj.sat; if(x.w==="soak")x.dur=adj.soak;} by[x.id]=x;});
   T.forEach(x=>{let s=D(x.es).getTime(); x.pred.forEach(p=>{s=Math.max(s,by[p].end+DAY)}); x.start=s; x.end=s+(x.dur-1)*DAY;});
-  const pr=by.B20; /* backward pass to power receiving */
-  [...T].reverse().forEach(x=>{ if(x.post){x.slack=null;return;} const succ=T.filter(y=>!y.post&&y.pred.includes(x.id)); x.lf=x.id==="B20"?pr.end:(succ.length?Math.min(...succ.map(y=>y.lf-(y.dur)*DAY)):pr.start-DAY); x.slack=Math.round((x.lf-x.end)/DAY);});
-  const syncLate=new Date(Math.max(SYNC_BASE.getTime(),by.B25.end+22*DAY,by.B26.end+DAY));
-  return {T,by,syncLate};
+  const pr=by[ms]; /* backward pass to the milestone */
+  [...T].reverse().forEach(x=>{ if(x.post){x.slack=null;return;} const succ=T.filter(y=>!y.post&&y.pred.includes(x.id)); x.lf=x.id===ms?pr.end:(succ.length?Math.min(...succ.map(y=>y.lf-(y.dur)*DAY)):pr.start-DAY); x.slack=Math.round((x.lf-x.end)/DAY);});
+  return {T,by,ms};
 }
 function opts(sel,vals,all){sel.innerHTML="";sel.append(el("option",{value:""},all));vals.forEach(v=>sel.append(el("option",{},v)));}
-opts($("#fArea"),[...new Set(BASE.map(x=>x.area))],"All areas"); opts($("#fOwn"),[...new Set(BASE.map(x=>x.own))],"All owners");
+const ALLT=BASE.concat(BASE_D); opts($("#fArea"),[...new Set(ALLT.map(x=>x.area))],"All areas"); opts($("#fOwn"),[...new Set(ALLT.map(x=>x.own))],"All owners");
 function renderPlan(){
-  LAST=compute(); const {T,by,syncLate}=LAST, pr=by.B20, lv=by.B25;
+  LAST=compute(BASE,"B20",{kegoc:+$("#wKegoc").value, sat:+$("#wSat").value, soak:+$("#wSoak").value});
+  LAST.syncLate=new Date(Math.max(SYNC_BASE.getTime(),LAST.by.B25.end+22*DAY,LAST.by.B26.end+DAY));
+  LASTD=compute(BASE_D,"G14",null);
+  const isD=$("#pSel").value==="d", by=LAST.by, syncLate=LAST.syncLate, pr=by.B20, lv=by.B25, T=(isD?LASTD:LAST).T;
+  ["wKegoc","wSat","wSoak"].forEach(i=>{$("#"+i).disabled=isD});
   const slip=Math.round((pr.start-TARGET)/DAY);
   $("#kpiDate").textContent=fmt(new Date(pr.start))+" 2026";
   const lvLag=Math.round((lv.end-BASE_LV)/DAY);
@@ -53,7 +55,7 @@ function renderPlan(){
   const head=el("div",{class:"gr head"}); head.append(el("div",{class:"gl label"},"Task and owner")); const ht=el("div",{class:"gt"});
   for(let i=0;i<n;i+=Math.ceil(n/12)){ht.append(el("span",{style:"left:"+pos(t0+i*DAY)+"%"},fmt(new Date(t0+i*DAY))));} head.append(ht); g.append(head);
   rows.forEach(x=>{const r=el("div",{class:"gr"}); r.append(el("div",{class:"gl"},x.t.split(":")[0]+"<small>"+x.id+" · "+x.own+" · "+fmt(new Date(x.start))+(x.dur>1?" to "+fmt(new Date(x.end)):"")+"</small>"));
-    const tr=el("div",{class:"gt"}); tr.append(el("div",{class:"today",style:"left:"+pos(t0)+"%"})); tr.append(el("div",{class:"target",style:"left:"+pos(TARGET.getTime())+"%"}));
+    const tr=el("div",{class:"gt"}); tr.append(el("div",{class:"today",style:"left:"+pos(t0)+"%"})); if(!isD)tr.append(el("div",{class:"target",style:"left:"+pos(TARGET.getTime())+"%"}));
     tr.append(el("div",{class:"bar"+(x.post?" f":x.slack===0?" c":""),style:"left:"+pos(x.start)+"%;width:"+(x.dur/n*100)+"%",title:x.t})); r.append(tr); g.append(r);});
   const tb=$("#planTbl"); tb.innerHTML="<thead><tr><th>No.</th><th>Task</th><th>Owner</th><th>Start</th><th>End</th><th>After</th><th>Float</th></tr></thead>";
   const body=el("tbody"); rows.forEach(x=>{const tr=el("tr",{class:"row",tabindex:"0","aria-expanded":"false"},"<td class='mono'>"+x.id+"</td><td>"+x.t+"</td><td>"+x.own+"</td><td class='mono'>"+fmt(new Date(x.start))+"</td><td class='mono'>"+fmt(new Date(x.end))+"</td><td class='mono'>"+(x.pred.join(", ")||"–")+"</td><td>"+(x.post?"<span class='chip'>follow-on</span>":x.slack===0?"<span class='chip crit'>critical</span>":"<span class='chip ok'>"+x.slack+" d</span>")+"</td>");
@@ -62,7 +64,7 @@ function renderPlan(){
   renderModeInfo(); renderSteps();
 }
 function toggler(tr,d){const tog=()=>{d.hidden=!d.hidden;tr.setAttribute("aria-expanded",String(!d.hidden))}; tr.addEventListener("click",tog); tr.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();tog()}});}
-["wKegoc","wSat","wSoak","fArea","fOwn","fCrit"].forEach(i=>$("#"+i).addEventListener("change",renderPlan));
+["pSel","wKegoc","wSat","wSoak","fArea","fOwn","fCrit"].forEach(i=>$("#"+i).addEventListener("change",renderPlan));
 
 /* ---------- generic filterable table ---------- */
 function ftable(tbl,cols,data,filters,detail,countEl){
@@ -73,7 +75,7 @@ function ftable(tbl,cols,data,filters,detail,countEl){
     if(countEl)countEl.textContent=rows.length+" of "+data.length+" items";};
   filters.forEach(([sel])=>$(sel).addEventListener("change",draw)); draw();
 }
-const CHIP={"No record on file":"crit","Stated complete, records to check":"warn","Open with KEGOC":"crit","Shown in design only":"","Not known":"warn","In progress":"ok","Not connected today":"warn","High":"crit","Medium":"warn","Low":"ok"};
+const CHIP={"No record on file":"crit","Stated complete, records to check":"warn","Open with KEGOC":"crit","Shown in design only":"","Not known":"warn","In progress":"ok","Not connected today":"warn","Procedure under review":"warn","Scope open":"warn","High":"crit","Medium":"warn","Low":"ok"};
 const chip=s=>"<span class='chip "+(CHIP[s]||"")+"'>"+s+"</span>";
 
 const REQ=DATA.REQ, RISK=DATA.RISK;
@@ -81,7 +83,7 @@ opts($("#rSys"),[...new Set(REQ.map(r=>r.sys))],"All systems"); opts($("#rStage"
 ftable($("#reqTbl"),[["System",r=>r.sys],["What must be proven",r=>r.item],["Lead",r=>r.who],["Test stage",r=>r.stage],["Status",r=>chip(r.st)]],REQ,[["#rSys","sys"],["#rStage","stage"],["#rStat","st"]],r=>"<b>Gap to close:</b> "+r.gap,$("#rCount"));
 opts($("#kTopic"),[...new Set(RISK.map(r=>r.topic))],"All topics");
 ftable($("#riskTbl"),[["Topic",r=>r.topic],["Difficulty or limit",r=>"<b>"+r.title+"</b><br><span class='note'>"+r.why+"</span>"],["Severity",r=>chip(r.sev)],["Acts",r=>r.who]],RISK,[["#kTopic","topic"],["#kSev","sev"]],r=>"<b>Mitigation:</b> "+r.mit);
-$("#cmpTbl").innerHTML="<thead><tr><th>Dimension</th><th>Option A · 500 kV (baseline, unchanged)</th><th>Option B · 220 kV and autotransformer</th></tr></thead><tbody>"+DATA.CMP.map(r=>"<tr><td>"+r[0]+"</td><td>"+r[1]+"</td><td>"+r[2]+"</td></tr>").join("")+"</tbody>";
+$("#cmpTbl").innerHTML="<thead><tr><th>Dimension</th><th>Option A · 500 kV (baseline, unchanged)</th><th>Option B · 220 kV and autotransformer</th><th>Option 5 · black start diesel generators</th></tr></thead><tbody>"+DATA.CMP.map(r=>"<tr><td>"+r[0]+"</td><td>"+r[1]+"</td><td>"+r[2]+"</td><td>"+(r[3]||"")+"</td></tr>").join("")+"</tbody>";
 $("#decTbl").innerHTML="<thead><tr><th>By</th><th>Decision point</th><th>Who decides</th><th>Why it matters</th></tr></thead><tbody>"+DATA.DEC.map(r=>"<tr><td class='mono'>"+r[0]+"</td><td>"+r[1]+"</td><td>"+r[2]+"</td><td>"+r[3]+"</td></tr>").join("")+"</tbody>";
 for(const k in DATA.DEP){$("#deps").append(el("div",{class:"panel"},"<h3>Needed from "+k+"</h3><ul>"+DATA.DEP[k].map(x=>"<li>"+x+"</li>").join("")+"</ul>"));}
 
@@ -89,7 +91,7 @@ for(const k in DATA.DEP){$("#deps").append(el("div",{class:"panel"},"<h3>Needed 
 const svg=$("#plot"), NS="http://www.w3.org/2000/svg";
 const mk=(t,a,txt)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;return e};
 const dOf=pts=>pts.map((p,i)=>(i?"L":"M")+p[0]+","+p[1]).join(" ");
-const MODES=PLOT.MODES, MODE_COLOR={a:"var(--optA)",b:"var(--optB)",r:"var(--optR)",t:"var(--optT)"};
+const MODES=PLOT.MODES, MODE_COLOR={a:"var(--optA)",b:"var(--optB)",r:"var(--optR)",t:"var(--optT)",d:"var(--optD)"};
 const blockEl={}, blockDef={}, wireEl={};
 let mode="b", stepIdx=null, playTimer=null, selected=null, flowLayer;
 
@@ -141,7 +143,7 @@ function applyRoute(){
   for(const id in wireEl)wireEl[id].classList.toggle("dim",!segOn.has(id));
   $("#decor").classList.add("dim");
   [...$("#modeBtns").children].forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===mode)));
-  renderModeInfo(); renderSteps(); centreMap(cur.size?cur:req);
+  applySld(); renderLoad(); renderModeInfo(); renderSteps(); centreMap(cur.size?cur:req);
 }
 
 function modeDates(M){
@@ -150,6 +152,7 @@ function modeDates(M){
   const by=LAST.by, f=t=>fmt(new Date(t));
   if(M.dates==="b")return [[f(by.B20.start),"Power receiving: 220 kV bus section and autotransformer live (target)"],[f(by.B21.start),"500 kV bus live through the autotransformer"],[f(by.B22.end),"End of the hold period for the 500 kV switchyard"],[f(by.B23.start),"GSUT11 with UAT11 energised"],[f(by.B24.start),"Block 1 10 kV boards live"],[f(by.B25.end),"Block 1 0.4 kV boards live"]];
   if(M.dates==="r")return [[f(by.B26.end),"KEGOC approval of the export route, if the 30-day placeholder for its review holds"],["22 Dec","GT11 first synchronisation, only if temporary power carries the work until then and KEGOC approves the export route"],[f(LAST.syncLate.getTime()),"Otherwise the earliest GT11 synchronisation by plan logic"]];
+  if(M.dates==="d"&&LASTD){const g=LASTD.by; return [[f(g.G14.start),"First diesel supply to the Block 1 10 kV boards, by plan logic. No target date is set"],[f(g.G15.end),"Block 1 0.4 kV boards live from the diesel sets"],[f(g.G16.start),"Earliest GT11 start sequence on diesel supply, only if it is in the scope"]];}
   return [];
 }
 function renderModeInfo(){
@@ -159,7 +162,7 @@ function renderModeInfo(){
     "<h4>Conditions</h4><ul>"+M.cond.map(c=>"<li>"+c+"</li>").join("")+"</ul>";
 }
 function stepDate(s){
-  if(!s.task||!LAST)return ""; const by=LAST.by, a=by[s.task], b=by[s.task2||s.task];
+  if(!s.task||!LAST||!LASTD)return ""; const by=Object.assign({},LAST.by,LASTD.by), a=by[s.task], b=by[s.task2||s.task];
   return "Plan date "+fmt(new Date(a.start))+(b.end>a.start?" to "+fmt(new Date(b.end)):"")+", provisional";
 }
 function renderSteps(){
@@ -188,14 +191,93 @@ $("#stNext").addEventListener("click",()=>{stopPlay();setStep(stepIdx===null?0:M
 $("#stAll").addEventListener("click",()=>{stopPlay();setStep(null)});
 $("#stPlay").addEventListener("click",()=>{playTimer?stopPlay():startPlay()});
 
-function selectBlock(id){
-  if(selected&&blockEl[selected])blockEl[selected].classList.remove("sel");
-  const box=$("#blockInfo"); selected=id;
-  if(!id){box.hidden=true;return;}
-  const b=blockDef[id]; blockEl[id].classList.add("sel"); box.hidden=false;
-  box.innerHTML="<h3><span>"+b.n+"</span><button type='button' aria-label='Close block details'>Close</button></h3><p>"+b.info+"</p>";
-  box.querySelector("button").addEventListener("click",()=>{selectBlock(null);blockEl[id].focus&&blockEl[id].focus()});
+function clearSel(){
+  if(selected){const e=selected.sld?sldEl[selected.id]:blockEl[selected.id]; if(e)e.classList.remove("sel");}
+  selected=null; $("#blockInfo").hidden=true;
 }
+function showInfo(node,title,html){
+  const box=$("#blockInfo"); node.classList.add("sel"); box.hidden=false;
+  box.innerHTML="<h3><span>"+title+"</span><button type='button' aria-label='Close details'>Close</button></h3>"+html;
+  box.querySelector("button").addEventListener("click",()=>{clearSel();node.focus&&node.focus()});
+}
+function selectBlock(id){
+  clearSel(); if(!id)return; selected={id:id,sld:false};
+  const b=blockDef[id]; showInfo(blockEl[id],b.n,"<p>"+b.info+"</p>");
+}
+function selectEl(id){
+  clearSel(); const e=sldDef[id], I=DATA.INFO[e.info]; if(!I)return; selected={id:id,sld:true};
+  showInfo(sldEl[id],I.n,"<p>"+chip(I.st)+" <span class='note'>Lead: "+I.who+"</span></p><p><b>Before it is made live:</b> "+I.prove+"</p>"+(I.note?"<p class='note'>"+I.note+"</p>":""));
+}
+
+/* ---------- single-line diagram ---------- */
+const sld=$("#sld"), sldEl={}, sldDef={}, sldWire={}, sldCb=[];
+let sldFlow;
+function buildSld(){
+  const gW=mk("g",{}), gE=mk("g",{}), gD=mk("g",{class:"dimmable dim"});
+  SLD.DECOR.forEach(p=>gD.append(mk("path",{class:"wire",d:dOf(p)})));
+  for(const id in SLD.SEG){const w=mk("path",{class:"wire dimmable",d:dOf(SLD.SEG[id])}); sldWire[id]=w; gW.append(w);}
+  SLD.DOTS.forEach(p=>gW.append(mk("circle",{class:"jn",cx:p[0],cy:p[1],r:2.6})));
+  sldFlow=mk("g",{"aria-hidden":"true"});
+  SLD.ELS.forEach(e=>{
+    const I=DATA.INFO[e.info], g=mk("g",{class:"el","data-id":e.id}); g.append(mk("title",{},I?I.n:e.id));
+    e.sh.forEach(a=>{
+      if(a[0]==="bus")g.append(mk("path",{class:"bus",d:"M"+a[1]+","+a[2]+" L"+a[3]+","+a[2]}));
+      else if(a[0]==="cb"){const r=mk("rect",{class:"sym cb",x:a[1]-5,y:a[2]-5,width:10,height:10}); sldCb.push({x:a[1],y:a[2],n:r}); g.append(r);}
+      else if(a[0]==="tr"){const v=a[3]==="v", o=8; g.append(mk("circle",{class:"sym",cx:v?a[1]:a[1]-o,cy:v?a[2]-o:a[2],r:12}),mk("circle",{class:"sym",cx:v?a[1]:a[1]+o,cy:v?a[2]+o:a[2],r:12,"fill-opacity":.6}));}
+      else if(a[0]==="g"){g.append(mk("circle",{class:"sym",cx:a[1],cy:a[2],r:14}),mk("text",{class:"symtxt",x:a[1],y:a[2]+4},a[3]));}
+      else if(a[0]==="box"){g.append(mk("rect",{class:"sym",x:a[1],y:a[2],width:a[3],height:a[4],rx:2}),mk("text",{class:"symtxt",x:a[1]+a[3]/2,y:a[2]+a[4]/2+4},a[5]));}
+      else if(a[0]==="src"){g.append(mk("path",{class:"sym",d:"M"+(a[1]-8)+","+(a[2]-8)+" L"+(a[1]+8)+","+(a[2]-8)+" L"+a[1]+","+(a[2]+10)+" Z"}));}
+      else if(a[0]==="ln"){g.append(mk("path",{class:"thin",d:dOf(a[1])}));}
+    });
+    (e.t||[]).forEach(t=>g.append(mk("text",{x:t[1],y:t[2],"font-size":11.5,"font-weight":600,"text-anchor":t[3]||"middle"},t[0])));
+    if(I){g.classList.add("pick"); g.setAttribute("tabindex","0"); g.setAttribute("role","button"); g.setAttribute("aria-label",I.n+", show details");
+      g.addEventListener("click",()=>selectEl(e.id));
+      g.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();selectEl(e.id)}});}
+    sldEl[e.id]=g; sldDef[e.id]=e; gE.append(g);
+  });
+  sld.append(gD,gW,sldFlow,gE);
+}
+function onPath(pt,pts){
+  for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i];
+    if(pt.x>=Math.min(a[0],b[0])-1&&pt.x<=Math.max(a[0],b[0])+1&&pt.y>=Math.min(a[1],b[1])-1&&pt.y<=Math.max(a[1],b[1])+1)return true;}
+  return false;
+}
+function applySld(){
+  const M=MODES[mode], k=stepIdx, req=new Set(), live=new Set(), cur=new Set(), segOn=new Set(), livePts=[], arrows=[];
+  const has=(set,e)=>set.has(e.id)||e.b.some(x=>set.has(x));
+  M.steps.forEach((s,i)=>(s.b||[]).concat(s.e||[]).forEach(id=>{req.add(id); if(k===null||i<=k)live.add(id); if(i===k)cur.add(id);}));
+  SLD.ELS.forEach(e=>{const c=sldEl[e.id].classList, r=has(req,e); c.toggle("dim",!r); c.toggle("req",r); c.toggle("live",has(live,e)); c.toggle("cur",has(cur,e));});
+  sldFlow.textContent="";
+  M.steps.forEach((s,i)=>(s.d||s.s).forEach(tok=>{
+    const rev=tok[0]==="-", id=rev?tok.slice(1):tok; if(!SLD.SEG[id])return;
+    const pts=rev?[...SLD.SEG[id]].reverse():SLD.SEG[id], d=dOf(pts); segOn.add(id);
+    if(k===null||i<=k){sldFlow.append(mk("path",{class:"flow",d}),mk("path",{class:"flowdots",d})); arrows.push(...arrowsFor(pts)); livePts.push(pts);}
+    else sldFlow.append(mk("path",{class:"pend",d}));
+  }));
+  arrows.forEach(a=>sldFlow.append(a));
+  for(const id in sldWire)sldWire[id].classList.toggle("dim",!segOn.has(id));
+  sldCb.forEach(c=>c.n.classList.toggle("on",livePts.some(p=>onPath(c,p))));
+}
+
+/* ---------- load against capacity, Option 5 ---------- */
+const loadOn=DATA.LOADS.map(l=>!!l.on);
+function renderLoad(){
+  const box=$("#loadBox"); box.hidden=mode!=="d"; if(mode!=="d")return;
+  const cap=DATA.DG_CAP.sets*DATA.DG_CAP.kw, one=DATA.DG_CAP.kw, sum=DATA.LOADS.reduce((a,l,i)=>a+(loadOn[i]?l.kw:0),0);
+  const scale=Math.max(cap*1.25,sum*1.05), pct=v=>Math.min(100,v/scale*100), nf=v=>v.toLocaleString("en-GB");
+  const cls=sum>cap?"over":sum>cap-one?"warn":"";
+  box.innerHTML="<h3>Load against diesel capacity</h3><p><span class='loadnum'>"+nf(sum)+" kW</span> of "+nf(cap)+" kW ("+DATA.DG_CAP.sets+" sets of "+nf(one)+" kW), "+Math.round(sum/cap*100)+" %. "+
+    (sum>cap?"<span class='chip crit'>Above the capacity of four sets</span>":sum>cap-one?"<span class='chip warn'>Needs all four sets, no reserve set</span>":"<span class='chip ok'>Within three sets, one in reserve</span>")+"</p>"+
+    "<div class='meter "+cls+"' role='img' aria-label='"+nf(sum)+" kW selected of "+nf(cap)+" kW'><div class='fill' style='width:"+pct(sum)+"%'></div>"+
+    "<div class='mark' style='left:"+pct(cap-one)+"%'><span>3 sets</span></div><div class='mark' style='left:"+pct(cap)+"%'><span>4 sets, 8 MW</span></div></div>"+
+    "<ul class='loads'>"+DATA.LOADS.map((l,i)=>"<li><label><input type='checkbox' data-i='"+i+"'"+(loadOn[i]?" checked":"")+"><span>"+l.n+" <span class='note'>(confirm with "+l.conf+")</span></span><span class='kw'>"+nf(l.kw)+" kW</span></label></li>").join("")+"</ul>"+
+    "<p class='note'>Every load value is an assumption for orientation until the load list and the sizing calculation are received. Active power only: motor starting current, step load limits and the short-time duty of the starting converter are not modelled.</p>";
+  box.querySelectorAll("input").forEach(c=>c.addEventListener("change",()=>{loadOn[+c.dataset.i]=c.checked;renderLoad();const n=box.querySelector("input[data-i='"+c.dataset.i+"']"); if(n)n.focus();}));
+}
+
+/* which drawing is shown */
+function setShow(v){$("#route").setAttribute("data-view",v); [["wBoth","both"],["wPlot","plot"],["wSld","sld"]].forEach(([i,n])=>$("#"+i).setAttribute("aria-pressed",String(n===v)));}
+$("#wBoth").addEventListener("click",()=>setShow("both")); $("#wPlot").addEventListener("click",()=>setShow("plot")); $("#wSld").addEventListener("click",()=>setShow("sld"));
 
 /* map view: presets, zoom, drag */
 const AR=816/655; let view=PLOT.VIEWS.route.slice(), dragMoved=false;
@@ -219,7 +301,7 @@ function centreMap(ids){
 }
 
 /* ---------- start ---------- */
-buildPlot();
+buildPlot(); buildSld(); setShow("both");
 for(const m in MODES){const b=el("button",{type:"button","data-m":m,style:"--mc:"+MODE_COLOR[m]},"<span>"+MODES[m].label+"</span><small>"+MODES[m].steps.length+" steps</small>"); b.addEventListener("click",()=>setMode(m)); $("#modeBtns").append(b);}
 renderPlan(); applyRoute(); show();
 })();

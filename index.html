@@ -17,7 +17,7 @@
 <header class="top"><div class="wrap">
   <div>
     <h1>220 kV Power Receiving Plan</h1>
-    <p class="sub">Early Power, Block 1. Option B (through the 220 kV switchyard and autotransformer) shown beside the unchanged 500 kV baseline. Working plan of 10 November 2026. All dates provisional.</p>
+    <p class="sub">Early Power, Block 1. Option B (through the 220 kV switchyard and autotransformer) and Option 5 (black start diesel generators, no grid) shown beside the unchanged 500 kV baseline. Working plan of 10 November 2026. All dates provisional.</p>
   </div>
   <button id="themeBtn" type="button" aria-label="Switch light or dark theme">Light / dark</button>
 </div></header>
@@ -49,8 +49,8 @@
 </section>
 
 <section id="route" data-tab="Route">
-  <h2>Route on the plot plan</h2>
-  <p class="lead">Select an option. The blocks it needs stay lit on the plant layout, the rest is dimmed, and the energy path runs along the route. Step through the energisation sequence, or select a block to see what it needs before it is made live.</p>
+  <h2>Route on the plot plan and the single-line diagram</h2>
+  <p class="lead">Select an option. The blocks it needs stay lit on the plant layout and on the Block 1 single-line diagram, the rest is dimmed, and the energy path runs along the route on both. Step through the energisation sequence, or select a block to see what it needs before it is made live.</p>
   <div class="modes" id="modeBtns" role="group" aria-label="Route option"></div>
   <div class="routegrid">
     <div class="mapcol">
@@ -60,17 +60,34 @@
         <button type="button" id="vIn" aria-label="Zoom in">+</button>
         <button type="button" id="vOut" aria-label="Zoom out">&minus;</button>
         <span class="note maphint">Drag to move the map.</span>
+        <span role="group" aria-label="Show" style="margin-left:auto;display:flex;gap:6px">
+          <button type="button" id="wBoth" aria-pressed="true">Both</button>
+          <button type="button" id="wPlot" aria-pressed="false">Plot plan</button>
+          <button type="button" id="wSld" aria-pressed="false">Diagram</button>
+        </span>
       </div>
-      <div class="mapscroll" id="mapScroll" tabindex="0" role="region" aria-label="Plot plan, scrollable">
-        <svg id="plot" viewBox="-8 340 816 655" role="group" aria-label="Simplified plot plan of the plant with the selected route"></svg>
+      <div class="views">
+        <figure id="figPlot"><figcaption>Plot plan</figcaption>
+          <div class="mapscroll" id="mapScroll" tabindex="0" role="region" aria-label="Plot plan, scrollable">
+            <svg id="plot" class="rsvg" viewBox="-8 340 816 655" role="group" aria-label="Simplified plot plan of the plant with the selected route"></svg>
+          </div>
+        </figure>
+        <figure id="figSld"><figcaption>Block 1 single-line diagram, simplified</figcaption>
+          <div class="mapscroll" id="sldScroll" tabindex="0" role="region" aria-label="Single-line diagram, scrollable">
+            <svg id="sld" class="rsvg" viewBox="20 12 780 640" role="group" aria-label="Simplified single-line diagram of Block 1 with the selected route"></svg>
+          </div>
+        </figure>
       </div>
       <div class="legend">
         <span><i class="lg lg-flow"></i>Energised path, arrows show direction</span>
         <span><i class="lg lg-pend"></i>Path still to come</span>
         <span><i class="lg lg-req"></i>Block needed for this option</span>
         <span><i class="lg lg-dim"></i>Not needed for this option</span>
+        <span><i class="lg lg-cb"></i>Breaker on the live path</span>
+        <span><i class="lg lg-cbo"></i>Breaker not on the path</span>
       </div>
       <p class="note">Simplified layout drawn for orientation from the general plot plan. Positions are relative, small equipment is drawn larger than scale, and the conductors inside the switchyards, the cable routes and the grid line directions are indicative. It is not a design drawing and shows no switching detail.</p>
+      <p class="note">The single-line diagram is redrawn in simplified form from the plant key single-line diagram: busbars, breakers, transformers and the GT11 path only. Disconnectors, earthing switches, instrument transformers and the other units are left out, and the arrangement of circuits on the 500 kV diameters is indicative. Lines that cross without a dot are not connected. A filled breaker lies on the live path of the selected option; it is not a switching state.</p>
     </div>
     <div class="sidecol">
       <div class="panel" id="modeInfo"></div>
@@ -84,6 +101,7 @@
         <p class="stepnow" id="stepNow" aria-live="polite"></p>
         <ol class="steps" id="stepList"></ol>
       </div>
+      <div class="panel" id="loadBox" hidden></div>
       <div class="panel" id="blockInfo" aria-live="polite" hidden></div>
     </div>
   </div>
@@ -91,8 +109,9 @@
 
 <section id="plan" data-tab="Action plan">
   <h2>Action plan to power receiving</h2>
-  <p class="lead">Built backward from 1 December. Durations are assumptions to be confirmed with the party named. Change the assumptions to see the effect on the date.</p>
+  <p class="lead">Option B is built backward from 1 December. Option 5 has no target date; its plan runs forward from today. Durations are assumptions to be confirmed with the party named. Change the assumptions to see the effect on the date.</p>
   <div class="controls">
+    <label>Plan<select id="pSel"><option value="b" selected>Option B: 220 kV and autotransformer</option><option value="d">Option 5: black start diesel generators</option></select></label>
     <label>KEGOC review of settings and scheme<select id="wKegoc"><option value="5">5 days</option><option value="7" selected>7 days</option><option value="10">10 days</option><option value="15">15 days</option><option value="30">30 days</option></select></label>
     <label>220 kV and autotransformer test records<select id="wSat"><option value="0" selected>Complete, verification only</option><option value="14">Protection tests to finish (+14 days)</option><option value="35">Site tests to repeat (+35 days)</option></select></label>
     <label>Hold period for the 500 kV switchyard<select id="wSoak"><option value="3" selected>72 hours</option><option value="1">24 hours</option></select></label>
@@ -106,7 +125,7 @@
 </section>
 
 <section id="requirements" data-tab="Requirements">
-  <h2>Commissioning requirements for Option B</h2>
+  <h2>Commissioning requirements for Option B and Option 5</h2>
   <p class="lead">What must be proven, at which test stage, before the route is made live. Test stages are never interchangeable: an individual test is not a functional test, and neither is energisation readiness.</p>
   <div class="controls">
     <label>System<select id="rSys"></select></label>
@@ -124,8 +143,8 @@
   <div class="scroll" tabindex="0" role="region" aria-label="Risk table, scrollable"><table id="riskTbl"></table></div>
 </section>
 
-<section id="compare" data-tab="A vs B">
-  <h2>Option A and Option B side by side</h2>
+<section id="compare" data-tab="Comparison">
+  <h2>Option A, Option B and Option 5 side by side</h2>
   <p class="lead">Option A is the baseline and is not changed by this plan.</p>
   <div class="scroll" tabindex="0" role="region" aria-label="Comparison table, scrollable"><table class="cmp" id="cmpTbl"></table></div>
 </section>
@@ -141,6 +160,7 @@
 
 <script src="js/data.js"></script>
 <script src="js/plotplan.js"></script>
+<script src="js/sld.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
