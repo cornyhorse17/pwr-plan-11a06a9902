@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+<meta name="color-scheme" content="light dark">
+<title>220 kV Power Receiving Plan</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top"><div class="wrap">
+  <div>
+    <h1>220 kV Power Receiving Plan</h1>
+    <p class="sub">Early Power, Block 1. Option B (through the 220 kV switchyard and autotransformer) shown beside the unchanged 500 kV baseline. Working plan of 10 November 2026. All dates provisional.</p>
+  </div>
+  <button id="themeBtn" type="button" aria-label="Switch light or dark theme">Light / dark</button>
+</div></header>
+<nav class="tabs" aria-label="Sections"><div class="wrap" id="tabs"></div></nav>
+
+<main id="main"><div class="wrap">
+<noscript><p class="panel">This page needs JavaScript to draw the plot plan, the timeline and the tables.</p></noscript>
+
+<section id="summary" data-tab="Summary">
+  <h2>Summary and decision ask</h2>
+  <p class="lead">The baseline stays as it is: power through the 500 kV switchyard and first synchronisation of GT11 on 22 December 2026. Option B is a prepared alternative for receiving grid power on 1 December 2026 if the 500 kV grid connection is not available in time.</p>
+  <div class="grid g3">
+    <div class="panel verdict"><div class="label">Power receiving through 220 kV</div><div class="big">Feasible with conditions</div><p>The plant design and the power receiving procedure already foresee this route. The date depends on four conditions listed below, none of which is evidenced today.</p></div>
+    <div class="panel verdict"><div class="label">GT11 export to 220 kV in reverse</div><div class="big">Feasible with conditions</div><p>The autotransformer bank is rated well above one gas turbine. The governing condition is the System Operator's approval of a staged connection scheme and its protection settings.</p></div>
+    <div class="panel"><div class="label">Plan result at current assumptions</div><div class="big" id="kpiDate">–</div><p id="kpiText"></p></div>
+  </div>
+  <div class="grid g2 mt">
+    <div class="panel"><h3>Conditions that decide 1 December</h3><ul>
+      <li>A 220 kV line to the plant is physically connected and KEGOC allows it to be made live under a staged scheme.</li>
+      <li>Signed completion and site test records exist for the 220 kV switchyard, the autotransformer and their protection and control cabinets. The records on file today cover the 500 kV panels only.</li>
+      <li>Protection settings for the staged network are calculated and agreed with KEGOC. The settings on file are design values for the final network.</li>
+      <li>Commercial metering is accepted and an import arrangement exists for the energy taken.</li></ul></div>
+    <div class="panel"><h3>What we ask from the head office</h3><ul>
+      <li>Agree by <b>12 November</b> that Option B is prepared as a contingency, with no change to the 500 kV baseline.</li>
+      <li>Raise with the consortium leader the early release of 220 kV and autotransformer commissioning resources, which its schedule shows in 2027.</li>
+      <li>Support one joint request to the Employer and, through it, to KEGOC for a staged connection through 220 kV.</li>
+      <li>Accept that this is a plan to receive power. It is not a statement of readiness; that follows only from an evidence-based gate.</li></ul></div>
+  </div>
+</section>
+
+<section id="route" data-tab="Route">
+  <h2>Route on the plot plan</h2>
+  <p class="lead">Select an option. The blocks it needs stay lit on the plant layout, the rest is dimmed, and the energy path runs along the route. Step through the energisation sequence, or select a block to see what it needs before it is made live.</p>
+  <div class="modes" id="modeBtns" role="group" aria-label="Route option"></div>
+  <div class="routegrid">
+    <div class="mapcol">
+      <div class="maptools" role="group" aria-label="Map view">
+        <button type="button" id="vRoute" aria-pressed="true">Route area</button>
+        <button type="button" id="vSite" aria-pressed="false">Whole site</button>
+        <button type="button" id="vIn" aria-label="Zoom in">+</button>
+        <button type="button" id="vOut" aria-label="Zoom out">&minus;</button>
+        <span class="note maphint">Drag to move the map.</span>
+      </div>
+      <div class="mapscroll" id="mapScroll" tabindex="0" role="region" aria-label="Plot plan, scrollable">
+        <svg id="plot" viewBox="-8 340 816 655" role="group" aria-label="Simplified plot plan of the plant with the selected route"></svg>
+      </div>
+      <div class="legend">
+        <span><i class="lg lg-flow"></i>Energised path, arrows show direction</span>
+        <span><i class="lg lg-pend"></i>Path still to come</span>
+        <span><i class="lg lg-req"></i>Block needed for this option</span>
+        <span><i class="lg lg-dim"></i>Not needed for this option</span>
+      </div>
+      <p class="note">Simplified layout drawn for orientation from the general plot plan. Positions are relative, small equipment is drawn larger than scale, and the conductors inside the switchyards, the cable routes and the grid line directions are indicative. It is not a design drawing and shows no switching detail.</p>
+    </div>
+    <div class="sidecol">
+      <div class="panel" id="modeInfo"></div>
+      <div class="panel">
+        <div class="stepbar">
+          <button type="button" id="stPrev" aria-label="Previous step">&larr; Previous</button>
+          <button type="button" id="stNext" aria-label="Next step">Next &rarr;</button>
+          <button type="button" id="stPlay" aria-pressed="false">Play</button>
+          <button type="button" id="stAll" aria-pressed="true">Whole route</button>
+        </div>
+        <p class="stepnow" id="stepNow" aria-live="polite"></p>
+        <ol class="steps" id="stepList"></ol>
+      </div>
+      <div class="panel" id="blockInfo" aria-live="polite" hidden></div>
+    </div>
+  </div>
+</section>
+
+<section id="plan" data-tab="Action plan">
+  <h2>Action plan to power receiving</h2>
+  <p class="lead">Built backward from 1 December. Durations are assumptions to be confirmed with the party named. Change the assumptions to see the effect on the date.</p>
+  <div class="controls">
+    <label>KEGOC review of settings and scheme<select id="wKegoc"><option value="5">5 days</option><option value="7" selected>7 days</option><option value="10">10 days</option><option value="15">15 days</option><option value="30">30 days</option></select></label>
+    <label>220 kV and autotransformer test records<select id="wSat"><option value="0" selected>Complete, verification only</option><option value="14">Protection tests to finish (+14 days)</option><option value="35">Site tests to repeat (+35 days)</option></select></label>
+    <label>Hold period for the 500 kV switchyard<select id="wSoak"><option value="3" selected>72 hours</option><option value="1">24 hours</option></select></label>
+    <label>Area<select id="fArea"></select></label>
+    <label>Owner<select id="fOwn"></select></label>
+    <label>Show<select id="fCrit"><option value="">All tasks</option><option value="c">Critical path only</option><option value="w">Starts this week</option></select></label>
+  </div>
+  <div class="scroll" tabindex="0" role="region" aria-label="Timeline, scrollable"><div class="gantt" id="gantt"></div></div>
+  <div class="legend"><span><i class="lg" style="background:var(--crit)"></i>Critical path</span><span><i class="lg" style="background:var(--optA)"></i>Has float</span><span><i class="lg" style="background:var(--accent)"></i>After power receiving</span><span><i class="lg" style="background:var(--warn)"></i>Today, 10 Nov</span><span><i class="lg" style="background:var(--ok)"></i>Target, 1 Dec</span></div>
+  <div class="scroll mt" tabindex="0" role="region" aria-label="Task table, scrollable"><table id="planTbl"></table></div>
+</section>
+
+<section id="requirements" data-tab="Requirements">
+  <h2>Commissioning requirements for Option B</h2>
+  <p class="lead">What must be proven, at which test stage, before the route is made live. Test stages are never interchangeable: an individual test is not a functional test, and neither is energisation readiness.</p>
+  <div class="controls">
+    <label>System<select id="rSys"></select></label>
+    <label>Stage<select id="rStage"></select></label>
+    <label>Status<select id="rStat"></select></label>
+    <span class="note" id="rCount"></span>
+  </div>
+  <div class="scroll" tabindex="0" role="region" aria-label="Requirements table, scrollable"><table id="reqTbl"></table></div>
+</section>
+
+<section id="risks" data-tab="Risks">
+  <h2>Difficulties, limits and mitigation</h2>
+  <p class="lead">Select a row for the mitigation and the party that must act.</p>
+  <div class="controls"><label>Topic<select id="kTopic"></select></label><label>Severity<select id="kSev"><option value="">All</option><option>High</option><option>Medium</option><option>Low</option></select></label></div>
+  <div class="scroll" tabindex="0" role="region" aria-label="Risk table, scrollable"><table id="riskTbl"></table></div>
+</section>
+
+<section id="compare" data-tab="A vs B">
+  <h2>Option A and Option B side by side</h2>
+  <p class="lead">Option A is the baseline and is not changed by this plan.</p>
+  <div class="scroll" tabindex="0" role="region" aria-label="Comparison table, scrollable"><table class="cmp" id="cmpTbl"></table></div>
+</section>
+
+<section id="decisions" data-tab="Decisions">
+  <h2>Decision points and dependencies</h2>
+  <div class="scroll" tabindex="0" role="region" aria-label="Decision table, scrollable"><table id="decTbl"></table></div>
+  <div class="grid g3 mt" id="deps"></div>
+</section>
+
+</div></main>
+<footer><div class="wrap">Prepared by Integra commissioning. Working document for planning. Dates are provisional until confirmed by the parties named. No readiness or energisation approval is stated or implied.</div></footer>
+
+<script src="js/data.js"></script>
+<script src="js/plotplan.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
